@@ -1,1 +1,115 @@
-
+:root{
+  --bg:#0b1020;
+  --panel:#121a33;
+  --panel2:#0f1730;
+  --accent:#6c7cff;
+  --text:#eef2ff;
+  --muted:#9aa4c7;
+  --line:rgba(255,255,255,.08);
+  --danger:#ff5d6c;
+  --ok:#3ad29f;
+}
+*{box-sizing:border-box}
+body{
+  margin:0;
+  font-family:Inter,system-ui,sans-serif;
+  background:linear-gradient(180deg,#0b1020,#070b16);
+  color:var(--text);
+}
+a{color:inherit}
+.layout{
+  display:grid;
+  grid-template-columns:280px 1fr;
+  min-height:100vh;
+}
+.sidebar{
+  background:var(--panel2);
+  border-right:1px solid var(--line);
+  padding:24px;
+}
+.brand h2,.main h1{margin:0 0 8px}
+.brand p{margin:0 0 20px;color:var(--muted)}
+.nav,.btn{
+  display:block;
+  width:100%;
+  padding:12px 14px;
+  border:1px solid var(--line);
+  border-radius:12px;
+  background:transparent;
+  color:var(--text);
+  cursor:pointer;
+  text-decoration:none;
+  text-align:center;
+  margin-bottom:10px;
+}
+.btn{background:var(--accent);border-color:transparent}
+.btn.secondary,.nav.active{background:rgba(108,124,255,.18)}
+.main{padding:24px}
+.panel{
+  display:none;
+  background:var(--panel);
+  border:1px solid var(--line);
+  border-radius:18px;
+  padding:20px;
+  margin-top:18px;
+}
+.panel.show{display:block}
+.grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+  gap:12px;
+}
+.card,.notice,.list-item{
+  background:rgba(255,255,255,.05);
+  border:1px solid var(--line);
+  border-radius:14px;
+  padding:14px;
+}
+.input,.textarea{
+  width:100%;
+  margin:10px 0;
+  padding:12px;
+  border-radius:12px;
+  border:1px solid var(--line);
+  background:#0c1226;
+  color:var(--text);
+}
+.textarea{min-height:120px;resize:vertical}
+.row{display:flex;gap:10px;flex-wrap:wrap}
+.row .btn{flex:1}
+.banner{
+  display:none;
+  position:sticky;
+  top:0;
+  z-index:10;
+  padding:12px 18px;
+  background:linear-gradient(90deg,#ff3b5c,#ff8f3d);
+  color:#fff;
+  font-weight:700;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+.log{
+  white-space:pre-wrap;
+  word-break:break-word;
+  margin:0;
+  background:#0c1226;
+  padding:14px;
+  border-radius:14px;
+  border:1px solid var(--line);
+  min-height:260px;
+}
+.center-card{
+  max-width:520px;
+  margin:10vh auto;
+  padding:30px;
+  border-radius:20px;
+  background:var(--panel);
+  text-align:center;
+  border:1px solid var(--line);
+}
+@media(max-width:900px){
+  .layout{grid-template-columns:1fr}
+  .sidebar{border-right:0;border-bottom:1px solid var(--line)}
+}
