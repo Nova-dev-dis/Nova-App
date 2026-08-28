@@ -1,1 +1,198 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Nova Dashboard</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <div id="banner" class="banner"></div>
 
+  <div class="layout">
+    <aside class="sidebar">
+      <div class="brand">
+        <h2>Nova</h2>
+        <p id="userText">Loading...</p>
+      </div>
+
+      <button class="nav active" data-panel="overview">Overview</button>
+      <button class="nav" data-panel="servers">Servers</button>
+      <button class="nav" data-panel="premium">Premium</button>
+      <button class="nav" data-panel="founders">Founders</button>
+      <button class="nav" data-panel="announce">Global Announcements</button>
+      <button class="nav" data-panel="errors">Errors</button>
+      <button class="nav" data-panel="donate">Donate</button>
+
+      <a class="btn secondary" href="/logout">Logout</a>
+    </aside>
+
+    <main class="main">
+      <section id="panel-overview" class="panel show">
+        <h1>Dashboard Overview</h1>
+        <div class="grid">
+          <div class="card">
+            <h3>Account</h3>
+            <p id="accountInfo">Loading...</p>
+          </div>
+          <div class="card">
+            <h3>Access</h3>
+            <p id="accessInfo">Loading...</p>
+          </div>
+          <div class="card">
+            <h3>Support</h3>
+            <p id="supportInfo">Loading...</p>
+          </div>
+        </div>
+      </section>
+
+      <section id="panel-servers" class="panel">
+        <h1>Your Servers</h1>
+        <div id="guildList" class="grid"></div>
+      </section>
+
+      <section id="panel-premium" class="panel">
+        <h1>Premium Manager</h1>
+        <p>Use this area to mark servers as premium for your own project.</p>
+        <input id="premiumGuildId" class="input" placeholder="Guild ID">
+        <div class="row">
+          <button id="markPremium" class="btn">Make Premium</button>
+          <button id="removePremium" class="btn secondary">Remove Premium</button>
+        </div>
+        <div id="premiumResult" class="notice"></div>
+      </section>
+
+      <section id="panel-founders" class="panel">
+        <h1>Founders</h1>
+        <p>Add your founder and developer Discord IDs here.</p>
+        <input id="founderId" class="input" placeholder="Discord ID">
+        <input id="founderRole" class="input" placeholder="Role name, e.g. Developer">
+        <button id="addFounder" class="btn">Save Founder</button>
+        <div id="founderResult" class="notice"></div>
+        <div id="founderList" class="list"></div>
+      </section>
+
+      <section id="panel-announce" class="panel">
+        <h1>Global Announcements</h1>
+        <textarea id="announceText" class="textarea" placeholder="Write announcement..."></textarea>
+        <button id="sendAnnounce" class="btn">Send Announcement</button>
+        <div id="announceResult" class="notice"></div>
+      </section>
+
+      <section id="panel-errors" class="panel">
+        <h1>Error Log</h1>
+        <pre id="errorLog" class="log"></pre>
+      </section>
+
+      <section id="panel-donate" class="panel">
+        <h1>Donate</h1>
+        <p>Support the project here instead of a premium checkout area.</p>
+        <a class="btn" href="#">Donate Link</a>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    const navButtons = document.querySelectorAll('.nav');
+    const panels = document.querySelectorAll('.panel');
+    const banner = document.getElementById('banner');
+
+    navButtons.forEach(btn => btn.addEventListener('click', () => {
+      navButtons.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      panels.forEach(p => p.classList.remove('show'));
+      document.getElementById('panel-' + btn.dataset.panel).classList.add('show');
+    }));
+
+    async function api(url, options) {
+      const res = await fetch(url, options);
+      const data = await res.json();
+      if (!res.ok || data.ok === false) throw new Error(data.error || 'Request failed');
+      return data;
+    }
+
+    async function loadDashboard() {
+      try {
+        const me = await api('/api/me');
+        document.getElementById('userText').textContent = `${me.user.username}#${me.user.discriminator || '0000'}`;
+        document.getElementById('accountInfo').textContent = `ID: ${me.user.id}`;
+        document.getElementById('accessInfo').textContent = me.isFounder ? 'Founder access enabled' : 'Standard access';
+        document.getElementById('supportInfo').textContent = me.supportServerUrl || 'No support server set';
+        banner.textContent = '';
+
+        const guilds = await api('/api/guilds');
+        document.getElementById('guildList').innerHTML = guilds.guilds.map(g => `
+          <div class="card">
+            <h3>${g.name}</h3>
+            <p>ID: ${g.id}</p>
+            <p>${g.premium ? 'Premium' : 'Free'}</p>
+          </div>
+        `).join('') || '<div class="card">No servers found.</div>';
+
+        const founders = me.founders || [];
+        document.getElementById('founderList').innerHTML = founders.map(f => `
+          <div class="list-item">${f.role || 'Founder'} — ${f.id}</div>
+        `).join('') || '<div class="list-item">No founders added.</div>';
+
+        const errors = await api('/api/errors');
+        document.getElementById('errorLog').textContent = errors.errors || 'No errors logged yet.';
+      } catch (e) {
+        banner.textContent = e.message;
+        banner.style.display = 'block';
+      }
+    }
+
+    document.getElementById('markPremium').onclick = async () => {
+      try {
+        const guildId = document.getElementById('premiumGuildId').value.trim();
+        const result = await api(`/api/premium/${guildId}`, { method: 'POST' });
+        document.getElementById('premiumResult').textContent = `Marked ${result.guildId} premium.`;
+      } catch (e) {
+        document.getElementById('premiumResult').textContent = e.message;
+      }
+    };
+
+    document.getElementById('removePremium').onclick = async () => {
+      try {
+        const guildId = document.getElementById('premiumGuildId').value.trim();
+        const result = await api(`/api/premium/${guildId}`, { method: 'DELETE' });
+        document.getElementById('premiumResult').textContent = `Removed premium from ${result.guildId}.`;
+      } catch (e) {
+        document.getElementById('premiumResult').textContent = e.message;
+      }
+    };
+
+    document.getElementById('sendAnnounce').onclick = async () => {
+      try {
+        const message = document.getElementById('announceText').value.trim();
+        const result = await api('/api/announce/global', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message })
+        });
+        document.getElementById('announceResult').textContent = `Announcement sent: ${result.message}`;
+      } catch (e) {
+        document.getElementById('announceResult').textContent = e.message;
+      }
+    };
+
+    document.getElementById('addFounder').onclick = async () => {
+      try {
+        const id = document.getElementById('founderId').value.trim();
+        const role = document.getElementById('founderRole').value.trim();
+        const result = await api('/api/founders', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id, role })
+        });
+        document.getElementById('founderResult').textContent = `Saved. Total founders: ${result.founders.length}`;
+        loadDashboard();
+      } catch (e) {
+        document.getElementById('founderResult').textContent = e.message;
+      }
+    };
+
+    loadDashboard();
+  </script>
+</body>
+</html>
